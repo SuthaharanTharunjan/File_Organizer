@@ -147,6 +147,14 @@ GREEN = "\033[92m"
 RESET = "\033[0m"
 RED = "\033[91m"
 
+NAME = r"""
+  ___ _ _          ___                     _            
+ | __(_) |___ ___ / _ \ _ _ __ _ __ _ _ _ (_)______ _ _ 
+ | _|| | / -_)___| (_) | '_/ _` / _` | ' \| |_ / -_) '_|
+ |_| |_|_\___|    \___/|_| \__, \__,_|_||_|_/__\___|_|  
+                           |___/                        
+"""
+
 
 def source_location_getter():
     while True:
@@ -154,37 +162,52 @@ def source_location_getter():
         if source_location.exists() and source_location.is_dir():
             return source_location
         else:
-            print(f"{RED}FOLDER doesn't exists...{RESET}")
+            print(f"{RED}FOLDER doesn't exist...{RESET}")
 
 
 def main():
+    print(NAME)
     source_location = source_location_getter()
     print(
-        f"{RED}Warning : Files will be moved to categorized folders permenently{RESET}"
+        f"{RED}Warning : Files will be moved to categorized folders permanently{RESET}"
     )
-    confermation = input("Do you really want to continue (y/n) : ")
-    if confermation == "y":
+
+    confirmation = input("Do you really want to continue (yes/no) : ").strip().lower()
+
+    if confirmation in ["y", "yes"]:
         count = 0
+        skipped = 0
+
         for file in source_location.iterdir():
             if not file.is_file():
                 continue
 
-            file_ext = file.suffix.lower()
+            filename = file.name
+            filename_m = filename.lower()
 
             for folder_name, extensions in CATEGORY_MAP.items():
-
-                if file_ext in extensions:
-                    target_folder = source_location / folder_name
-                    target_folder.mkdir(exist_ok=True)
-                    shutil.move(file, target_folder)
-                    count += 1
-                    print(f"{GREEN}.{RESET}", end="")
+                if filename_m.endswith(extensions):
+                    try:
+                        target_folder = source_location / folder_name
+                        target_folder.mkdir(exist_ok=True)
+                        if not (target_folder / filename).exists():
+                            shutil.move(file, target_folder)
+                            count += 1
+                        else:
+                            skipped += 1
+                        print(f"{GREEN}.{RESET}", end="", flush=True)
+                    except (PermissionError, OSError) as e:
+                        print(f"\n{RED}Error moving '{filename}': {e}{RESET}")
+                        skipped += 1
                     break
+
         print()
-        print(f"✨Files moved : {count}")
-        print(f"{GREEN}Finished{RESET}")
+        print(f"✨ Files moved : {count}")
+        if skipped > 0:
+            print(f"⚠️ Files skipped : {skipped}")
+        print(f"{GREEN}Finished Successfully.{RESET}")
     else:
-        print(f"{RED}Cancelling and exitting the programme...{RESET}")
+        print(f"{RED}Cancelling and exiting the programme...{RESET}")
 
 
 if __name__ == "__main__":
