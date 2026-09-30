@@ -158,7 +158,11 @@ NAME = r"""
 
 def source_location_getter():
     while True:
-        source_location = Path(input("Enter the destination folder : ").strip())
+        source_location = (
+            Path(input("Enter source folder : ").strip().strip("'\""))
+            .expanduser()
+            .resolve()
+        )
         if source_location.exists() and source_location.is_dir():
             return source_location
         else:
@@ -177,34 +181,53 @@ def main():
     if confirmation in ["y", "yes"]:
         count = 0
         skipped = 0
+        unmatched = 0
 
-        for file in source_location.iterdir():
-            if not file.is_file():
+        current_script = Path(__file__).resolve()
+
+        files = [
+            f
+            for f in source_location.iterdir()
+            if f.is_file() and not f.name.startswith(".")
+        ]
+        for file in files:
+            if file.resolve() == current_script:
                 continue
 
             filename = file.name
             filename_m = filename.lower()
+            matched = False
 
             for folder_name, extensions in CATEGORY_MAP.items():
                 if filename_m.endswith(extensions):
+                    target_folder = source_location / folder_name
+                    target_file = target_folder / filename
+                    matched = True
+
                     try:
-                        target_folder = source_location / folder_name
                         target_folder.mkdir(exist_ok=True)
-                        if not (target_folder / filename).exists():
+                        if not target_file.exists():
                             shutil.move(file, target_folder)
                             count += 1
+                            print(f"{GREEN}.{RESET}", end="", flush=True)
                         else:
                             skipped += 1
-                        print(f"{GREEN}.{RESET}", end="", flush=True)
+                            print(f"{RED}.{RESET}", end="", flush=True)
                     except (PermissionError, OSError) as e:
                         print(f"\n{RED}Error moving '{filename}': {e}{RESET}")
                         skipped += 1
                     break
 
+            if not matched:
+                unmatched += 1
+                print(".", end="", flush=True)
+
         print()
         print(f"✨ Files moved : {count}")
         if skipped > 0:
             print(f"⚠️ Files skipped : {skipped}")
+        if unmatched > 0:
+            print(f"ℹ️ Unmatched files: {unmatched} (left in place)")
         print(f"{GREEN}Finished Successfully.{RESET}")
     else:
         print(f"{RED}Cancelling and exiting the programme...{RESET}")
