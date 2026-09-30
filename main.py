@@ -1,8 +1,6 @@
 from pathlib import Path
 import shutil
 
-from pathlib import Path
-
 # Documents & Text
 DOCUMENTS = (".pdf", ".docx", ".doc", ".txt", ".rtf", ".odt", ".md", ".tex")
 
@@ -147,6 +145,7 @@ CATEGORY_MAP = {
 
 GREEN = "\033[92m"
 RESET = "\033[0m"
+RED = "\033[91m"
 
 
 def source_location_getter():
@@ -155,27 +154,37 @@ def source_location_getter():
         if source_location.exists() and source_location.is_dir():
             return source_location
         else:
-            print("FOLDER doesn't exists...")
+            print(f"{RED}FOLDER doesn't exists...{RESET}")
 
 
 def main():
     source_location = source_location_getter()
+    print(
+        f"{RED}Warning : Files will be moved to categorized folders permenently{RESET}"
+    )
+    confermation = input("Do you really want to continue (y/n) : ")
+    if confermation == "y":
+        count = 0
+        for file in source_location.iterdir():
+            if not file.is_file():
+                continue
 
-    for file in source_location.iterdir():
-        if not file.is_file():
-            continue
+            file_ext = file.suffix.lower()
 
-        file_ext = file.suffix.lower()
+            for folder_name, extensions in CATEGORY_MAP.items():
 
-        for folder_name, extensions in CATEGORY_MAP.items():
-
-            if file_ext in extensions:
-                target_folder = source_location / folder_name
-                target_folder.mkdir(exist_ok=True)
-                shutil.move(file, target_folder)
-                break
-
-    print(f"{GREEN}Finished{RESET}")
+                if file_ext in extensions:
+                    target_folder = source_location / folder_name
+                    target_folder.mkdir(exist_ok=True)
+                    shutil.move(file, target_folder)
+                    count += 1
+                    print(f"{GREEN}.{RESET}", end="")
+                    break
+        print()
+        print(f"✨Files moved : {count}")
+        print(f"{GREEN}Finished{RESET}")
+    else:
+        print(f"{RED}Cancelling and exitting the programme...{RESET}")
 
 
 if __name__ == "__main__":
