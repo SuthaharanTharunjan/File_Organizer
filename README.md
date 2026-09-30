@@ -46,6 +46,7 @@ All you need is **Python 3.6** or higher installed on your system.
    ```bash
    python main.py
    ```
+   *(Note: Use `python3 main.py` on macOS/Linux if required).*
 4. When prompted, enter the path to the messy folder you want to organize. *(Pro tip: You can just drag and drop the folder from your file manager directly into the terminal!)*
 5. Type `yes` or `y` to confirm.
 6. Watch the magic happen! 🪄
